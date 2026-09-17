@@ -1,0 +1,6 @@
+accounts.google.com/signin/v2/identifier
+accounts.google.com/o/oauth2/auth
+accounts.google.com/ServiceLogin
+appleid.apple.com/auth
+twitter.com/i/flow/login
+x.com/i/flow/login

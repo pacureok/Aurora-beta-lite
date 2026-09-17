@@ -1,0 +1,13 @@
+# POLÍTICA DE CÓDIGO CERRADO: SOLO BINARIOS Y RECURSOS
+*.py
+*.pyc
+*.c
+*.cpp
+*.h
+*.rs
+*.toml
+*.o
+*.obj
+__pycache__/
+build/
+.system_generated/

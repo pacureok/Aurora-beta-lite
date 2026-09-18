@@ -13,3 +13,4 @@ Código cerrado / Proprietary binaries distribution.
 - **Cero telemetría masiva:** 100% soberanía y datos confidenciales en local.
 - **Asistencia PAIX AI Local:** Confinada al loopback local (127.0.0.1:8765).
 - **Modo 8-BIT Retro & Optimizador de YouTube:** Entretenimiento sin rastreo publicitario.
+ versión Windows tienda https://apps.microsoft.com/detail/9ng2z0m71w5k?hl=es-MX&gl=MX

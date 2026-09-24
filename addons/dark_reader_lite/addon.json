@@ -1,0 +1,15 @@
+{
+  "id": "dark_reader_lite",
+  "name": "Dark Reader Lite",
+  "version": "1.0.0",
+  "description": "Modo oscuro inteligente y descanso visual para todas las páginas web",
+  "author": "Aurora Community",
+  "enabled": true,
+  "content_scripts": [
+    {
+      "matches": ["*"],
+      "css": ["dark.css"],
+      "js": ["dark.js"]
+    }
+  ]
+}

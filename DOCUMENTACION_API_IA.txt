@@ -1,0 +1,365 @@
+================================================================================
+                    AURORA-LITE - API DE CONTROL PARA IA
+              DOCUMENTACION COMPLETA DE ENDPOINTS Y FUNCIONES
+================================================================================
+
+DESCRIPCION GENERAL:
+--------------------
+Aurora-Lite incluye un puente HTTP integrado de alto rendimiento disenado
+especificamente para agentes de inteligencia artificial (como ChatGPT de
+escritorio, agentes autonomos, scripts de Python, curl, etc.).
+
+El servidor opera en local en:
+  http://127.0.0.1:8765
+
+COMO ACTIVAR EL MODO IA:
+------------------------
+1. Por linea de comandos / acceso directo:
+     Aurora-Lite.exe -gpt
+2. O desde los ajustes del navegador:
+     Activar la opcion "Modo IA / Agente de Escritorio".
+
+CARACTERISTICAS DEL PUENTE:
+---------------------------
+- Normalizacion Universal de Rutas: Todas las funciones responden tanto con
+  prefijo '/api/' como sin el (ej: '/api/input' o '/input'). Las barras finales
+  son opcionales (ej: '/tabs/' o '/tabs'). No distingue mayusculas/minusculas.
+- Soporte HTTP Dual: Todos los endpoints aceptan tanto GET como POST.
+- Parametros Flexibles: Los argumentos pueden enviarse como JSON en el cuerpo,
+  como query parameters en la URL (?param=valor), o como form-urlencoded.
+- Control Visual Multimodal: El navegador muestra un puntero visual para
+  seguimiento en tiempo real y ofrece capturas de pantalla de alta precision
+  en PNG binario o Base64 para modelos multimodales (GPT-4o, Claude 3.5, etc.).
+- Puerto CDP (Chrome DevTools Protocol): Cuando el modo GPT esta activo,
+  WebView2 tambien expone el puerto 9222 para herramientas que lo requieran.
+
+================================================================================
+1. COMANDO 'INPUT' (ENTRADA VERSATIL DE TEXTO, LETRAS Y FORMULARIOS)
+================================================================================
+
+Ruta:
+  POST /api/input   o   GET /api/input
+  POST /input       o   GET /input
+
+Descripcion:
+  Es la herramienta principal para escribir texto, presionar una sola letra/tecla,
+  o rellenar campos web con o sin selectores CSS.
+
+Parametros:
+  - text (string): Texto completo a escribir.
+  - key o char (string): Una sola letra o tecla (ej: "a", "x", "enter", "tab").
+  - selector (string): Selector CSS del campo destino (ej: "#search-input").
+  - enter (bool): Si es true, presiona Enter despues de ingresar el texto.
+  - clear (bool): Si es true, borra el contenido previo antes de escribir.
+  - delay_ms (int): Milisegundos entre letras al escribir de forma nativa.
+  - method (string): "auto", "js" o "native".
+
+Ejemplos de uso:
+
+  A) Presionar una sola letra o tecla:
+     curl -X POST http://127.0.0.1:8765/api/input -H "Content-Type: application/json" -d '{"key": "a"}'
+     curl -X POST http://127.0.0.1:8765/input -H "Content-Type: application/json" -d '{"key": "enter"}'
+
+  B) Escribir texto completo y presionar Enter:
+     curl -X POST http://127.0.0.1:8765/api/input -H "Content-Type: application/json" -d '{"text": "James Webb discoveries", "enter": true}'
+
+  C) Escribir en un campo especifico mediante selector CSS limpiando primero:
+     curl -X POST http://127.0.0.1:8765/api/input -H "Content-Type: application/json" -d '{"selector": "input[name=\"q\"]", "text": "astronomia", "enter": true, "clear": true}'
+
+================================================================================
+2. NAVEGACION Y BUSQUEDA
+================================================================================
+
+- /api/search  o  /search
+  Metodos: POST / GET
+  Parametros:
+    - query o q (string): Termino a buscar en el motor configurado.
+    - new_tab (bool, opcional): Si abrir en nueva pestana.
+  Ejemplo:
+    curl -X POST http://127.0.0.1:8765/api/search -d '{"query": "NASA James Webb"}'
+
+- /api/navigate  o  /navigate  (Alias: /goto, /url)
+  Metodos: POST / GET
+  Parametros:
+    - url (string): URL completa a cargar.
+  Ejemplo:
+    curl -X POST http://127.0.0.1:8765/api/navigate -d '{"url": "https://www.nasa.gov"}'
+
+- /api/reload  o  /reload  (Alias: /refresh)
+  Recarga la pagina actual.
+  Ejemplo:
+    curl -X POST http://127.0.0.1:8765/api/reload
+
+- /api/back  o  /back
+  Retrocede a la pagina anterior en el historial.
+
+- /api/forward  o  /forward
+  Avanza a la pagina siguiente en el historial.
+
+- /api/stop  o  /stop
+  Detiene la carga de la pagina en curso.
+
+================================================================================
+3. CONTROL VISUAL, RATON Y PUNTERO
+================================================================================
+
+- /api/click  o  /click
+  Metodos: POST / GET
+  Parametros:
+    - x (int): Coordenada X relativa a la vista web.
+    - y (int): Coordenada Y relativa a la vista web.
+    - button (string): "left" (por defecto), "right", "middle".
+    - double (bool): Si realizar doble clic.
+  Ejemplo:
+    curl -X POST http://127.0.0.1:8765/api/click -d '{"x": 450, "y": 320, "button": "left"}'
+
+- /api/move  o  /move
+  Metodos: POST / GET
+  Parametros:
+    - x (int), y (int): Coordenadas hacia donde desplazar el puntero visual.
+  Ejemplo:
+    curl -X POST http://127.0.0.1:8765/api/move -d '{"x": 600, "y": 400}'
+
+- /api/hover  o  /hover
+  Metodos: POST / GET
+  Parametros:
+    - x (int), y (int): Coordenadas donde posicionar y activar estado hover.
+
+- /api/drag  o  /drag
+  Metodos: POST / GET
+  Parametros:
+    - from_x, from_y, to_x, to_y (int): Arrastra el raton entre dos puntos.
+
+- /api/cursor  o  /cursor
+  Metodos: POST / GET
+  Parametros:
+    - visible (bool): true para mostrar el punto indicador blanco, false para ocultarlo.
+  Ejemplo:
+    curl -X POST http://127.0.0.1:8765/api/cursor -d '{"visible": true}'
+
+================================================================================
+4. INTERACCION POR ELEMENTOS WEB (TEXTO Y SELECTORES)
+================================================================================
+
+- /api/click_text  o  /click_text
+  Metodos: POST / GET
+  Parametros:
+    - text (string): Texto visible del enlace, boton o elemento a pulsar.
+  Ejemplo:
+    curl -X POST http://127.0.0.1:8765/api/click_text -d '{"text": "Show more"}'
+
+- /api/click_selector  o  /click_selector
+  Metodos: POST / GET
+  Parametros:
+    - selector (string): Selector CSS del elemento (ej: "button.submit-btn").
+
+- /api/focus  o  /focus
+  Metodos: POST / GET
+  Parametros:
+    - selector (string): Selector CSS del campo a enfocar.
+
+- /api/select  o  /select
+  Metodos: POST / GET
+  Parametros:
+    - selector (string): Selector CSS del elemento <select>.
+    - value (string, opcional): Valor de la opcion.
+    - text (string, opcional): Texto visible de la opcion.
+
+- /api/check  o  /check
+  Metodos: POST / GET
+  Parametros:
+    - selector (string): Selector CSS del checkbox o radio button.
+    - checked (bool, por defecto true): Marca o desmarca.
+
+- /api/uncheck  o  /uncheck
+  Metodos: POST / GET
+  Parametros:
+    - selector (string): Selector CSS del checkbox a desmarcar.
+
+================================================================================
+5. TECLADO Y ATAJOS NATIVOS
+================================================================================
+
+- /api/type  o  /type
+  Metodos: POST / GET
+  Parametros:
+    - text (string): Texto a escribir.
+    - enter (bool): Presionar Enter al finalizar.
+
+- /api/press  o  /press
+  Metodos: POST / GET
+  Parametros:
+    - key (string): Nombre de la tecla ("enter", "tab", "esc", "backspace",
+      "delete", "space", "up", "down", "left", "right", "f5", etc.).
+
+- /api/key_down  o  /key_down
+  Mantiene pulsada una tecla (ej: "shift", "ctrl").
+
+- /api/key_up  o  /key_up
+  Suelta una tecla previamente pulsada.
+
+- /api/shortcut  o  /shortcut
+  Metodos: POST / GET
+  Parametros:
+    - keys (array de strings): Teclas a pulsar a la vez (ej: ["ctrl", "c"], ["ctrl", "t"]).
+
+- /api/select_all  o  /select_all
+  Selecciona todo el contenido (Ctrl + A).
+
+- /api/clear  o  /clear
+  Borra el texto seleccionado o contenido del campo enfocado.
+
+================================================================================
+6. DESPLAZAMIENTO (SCROLL)
+================================================================================
+
+- /api/scroll  o  /scroll
+  Metodos: POST / GET
+  Parametros:
+    - delta_y o dy (int): Pixeles verticales (positivo = hacia abajo, negativo = arriba).
+    - delta_x o dx (int): Pixeles horizontales.
+    - smooth (bool): Desplazamiento suave.
+    - method (string): "auto", "js" o "wheel".
+  Ejemplo:
+    curl -X POST http://127.0.0.1:8765/api/scroll -d '{"delta_y": 400}'
+
+- /api/page_down  o  /page_down
+  Desplaza hacia abajo una pantalla completa (~85% del viewport).
+  Ejemplo:
+    curl -X POST http://127.0.0.1:8765/api/page_down
+
+- /api/page_up  o  /page_up
+  Desplaza hacia arriba una pantalla completa.
+
+- /api/scroll_top  o  /scroll_top
+  Sube al inicio de la pagina web.
+
+- /api/scroll_bottom  o  /scroll_bottom
+  Baja hasta el final de la pagina web.
+
+- /api/scroll_to_element  o  /scroll_to_element
+  Parametros:
+    - selector (string): Selector CSS del elemento al que desplazarse.
+
+================================================================================
+7. GESTION DE PESTANAS
+================================================================================
+
+- /api/tabs  o  /tabs
+  Metodos: GET / POST
+  Respuesta: Lista JSON de todas las pestanas abiertas con indice, titulo, URL
+             y estado activo.
+  Ejemplo:
+    curl http://127.0.0.1:8765/api/tabs
+
+- /api/tabs/new  o  /tabs/new
+  Metodos: POST / GET
+  Parametros:
+    - url (string, opcional): URL inicial. Si se omite, abre la de inicio.
+
+- /api/tabs/close  o  /tabs/close
+  Metodos: POST / GET
+  Parametros:
+    - index (int): Indice de la pestana a cerrar (-1 para la activa).
+
+- /api/tabs/switch  o  /tabs/switch
+  Metodos: POST / GET
+  Parametros:
+    - index (int): Indice de la pestana a activar.
+
+================================================================================
+8. PERCEPCION VISUAL Y ESTADO (PARA MODELOS MULTIMODALES)
+================================================================================
+
+- /api/screenshot  o  /screenshot
+  Metodos: GET / POST
+  Parametros:
+    - format (string): "png" (devuelve binario image/png directo) o
+                       "json" (devuelve Base64 con dimensiones).
+  Ejemplos:
+    Descargar captura PNG directa:
+      curl http://127.0.0.1:8765/api/screenshot -o captura.png
+
+    Obtener JSON Base64 para pasar a GPT-4o / Claude:
+      curl http://127.0.0.1:8765/api/screenshot?format=json
+
+- /api/state  o  /state
+  Metodos: GET / POST
+  Respuesta: JSON con el estado activo, URL actual, titulo de ventana, pestana
+             activa, dimensiones del viewport, posicion del cursor y capacidades.
+  Ejemplo:
+    curl http://127.0.0.1:8765/api/state
+
+- /api/viewport  o  /viewport  (Alias: /resize)
+  Metodos: POST / GET
+  Parametros:
+    - width (int): Ancho deseado de la ventana.
+    - height (int): Alto deseado de la ventana.
+
+- /api/zoom  o  /zoom
+  Metodos: POST / GET
+  Parametros:
+    - factor (float): Nivel de zoom (ej: 1.0 = 100%, 1.25 = 125%, 0.8 = 80%).
+
+================================================================================
+9. EJECUCION DE SCRIPTS Y UTILIDADES
+================================================================================
+
+- /api/eval  o  /eval
+  Metodos: POST / GET
+  Parametros:
+    - script o code (string): Codigo JavaScript a ejecutar en la pagina.
+  Ejemplo:
+    curl -X POST http://127.0.0.1:8765/api/eval -d '{"script": "console.log(document.title);"}'
+
+- /api/history  o  /history
+  Metodos: GET / POST
+  Parametros:
+    - limit (int, opcional): Cantidad de registros recientes a devolver.
+
+- /api/bookmarks  o  /bookmarks
+  Metodos: GET / POST
+  Respuesta: Lista de marcadores guardados en el navegador.
+
+- /api/wait  o  /wait
+  Metodos: POST / GET
+  Parametros:
+    - seconds (float) o ms (int): Tiempo de espera en el servidor antes de responder.
+
+- /api/ping  o  /ping
+  Comprobacion de salud del servidor. Retorna {"status": "ok", "service": "Aurora-Lite AI Bridge"}.
+
+================================================================================
+RESUMEN RAPIDO DE RUTAS Y FORMATOS
+================================================================================
+
+Accion                    Ruta                     Parametros Principales
+--------------------------------------------------------------------------------
+Escribir / Pulsar Tecla   /api/input               text, key/char, selector, enter, clear
+Buscar                    /api/search              query
+Navegar a URL             /api/navigate            url
+Hacer Clic                /api/click               x, y, button, double
+Mover Puntero             /api/move                x, y
+Desplazar (Scroll)        /api/scroll              delta_y, delta_x, smooth
+Bajar una Pagina          /api/page_down           (ninguno)
+Subir una Pagina          /api/page_up             (ninguno)
+Ir al Inicio              /api/scroll_top          (ninguno)
+Ir al Final               /api/scroll_bottom       (ninguno)
+Clic en Texto             /api/click_text          text
+Clic en Selector          /api/click_selector      selector
+Enfocar Campo             /api/focus               selector
+Seleccionar Opcion        /api/select              selector, value/text
+Marcar Checkbox           /api/check               selector, checked
+Desmarcar Checkbox        /api/uncheck             selector
+Captura de Pantalla       /api/screenshot          format ("png" o "json")
+Consultar Estado          /api/state               (ninguno)
+Listar Pestanas           /api/tabs                (ninguno)
+Nueva Pestana             /api/tabs/new            url
+Cambiar Pestana           /api/tabs/switch         index
+Cerrar Pestana            /api/tabs/close          index
+Ejecutar JavaScript       /api/eval                script
+Ajustar Zoom              /api/zoom                factor
+Verificar Estado (Ping)   /api/ping                (ninguno)
+--------------------------------------------------------------------------------
+Todas las rutas pueden llamarse sin "/api/" (ej: "/input", "/search", "/scroll").
+================================================================================

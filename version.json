@@ -1,0 +1,10 @@
+{
+  "version": "1.0.0-beta",
+  "name": "Aurora beta lite",
+  "channel": "beta",
+  "release_date": "2026-09-24",
+  "exe_file": "Aurora beta lite.exe",
+  "download_url": "https://raw.githubusercontent.com/pacureok/Aurora-beta-lite/main/Aurora%20beta%20lite.exe",
+  "repo_url": "https://github.com/pacureok/Aurora-beta-lite",
+  "changelog": "Versión oficial compilada de Aurora beta lite con núcleo Rust, barra minimalista y escudo de privacidad local."
+}

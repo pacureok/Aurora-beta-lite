@@ -1,0 +1,63 @@
+{
+  "manifest_version": "2.5",
+  "name": "Aurora AdBlock Turbo MV2.5",
+  "version": "2.5.0",
+  "description": "Filtro de red profundo ultra-r\u00e1pido sin restricciones de V3.",
+  "permissions": [
+    "webRequest",
+    "webRequestBlocking",
+    "<all_urls>"
+  ],
+  "network_rules": [
+    {
+      "url_filter": "doubleclick.net",
+      "action": "block"
+    },
+    {
+      "url_filter": "googlesyndication.com",
+      "action": "block"
+    },
+    {
+      "url_filter": "google-analytics.com",
+      "action": "block"
+    },
+    {
+      "url_filter": "adnxs.com",
+      "action": "block"
+    },
+    {
+      "url_filter": "criteo.com",
+      "action": "block"
+    },
+    {
+      "url_filter": "taboola.com",
+      "action": "block"
+    },
+    {
+      "url_filter": "outbrain.com",
+      "action": "block"
+    },
+    {
+      "url_filter": "adservice.google",
+      "action": "block"
+    },
+    {
+      "url_filter": "popads.net",
+      "action": "block"
+    },
+    {
+      "url_filter": "smartadserver.com",
+      "action": "block"
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ]
+}

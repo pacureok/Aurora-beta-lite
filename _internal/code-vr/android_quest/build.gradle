@@ -1,0 +1,59 @@
+// code-vr/android_quest/build.gradle
+// Configuración de compilación para el APK nativo de Aurora Lite en Meta Quest 3S (Horizon OS)
+
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+}
+
+android {
+    namespace 'com.aurora.lite.vr'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.aurora.lite.vr"
+        minSdk 29 // Android 10+ (Meta Quest OS base)
+        targetSdk 34
+        versionCode 100
+        versionName "1.0.0-quest3s"
+
+        ndk {
+            abiFilters 'arm64-v8a' // Arquitectura de 64 bits para procesadores Snapdragon XR2 Gen 2
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.debug
+        }
+        debug {
+            applicationIdSuffix ".debug"
+            debuggable true
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    sourceSets {
+        main {
+            assets.srcDirs = ['src/main/assets', '../theater']
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.webkit:webkit:1.10.0'
+}

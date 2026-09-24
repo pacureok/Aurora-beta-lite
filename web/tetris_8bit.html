@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🕹️ 8-BIT TETRIS ARCADE — Aurora-Lite</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #050508;
+            color: #00ffcc;
+            font-family: 'Consolas', 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Scanlines CRT */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%),
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.05));
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
+            z-index: 1000;
+            box-shadow: inset 0 0 120px rgba(0,0,0,0.85);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 12px;
+            z-index: 10;
+        }
+        h1 {
+            font-size: 26px;
+            color: #ff0055;
+            text-shadow: 0 0 10px #ff0055, 0 0 20px #ff0055;
+            letter-spacing: 3px;
+        }
+        .subtitle {
+            font-size: 12px;
+            color: #39ff14;
+            letter-spacing: 2px;
+        }
+
+        .arcade-container {
+            display: flex;
+            gap: 20px;
+            background: #0d001a;
+            border: 4px solid #00ffcc;
+            padding: 16px;
+            box-shadow: 0 0 25px rgba(0, 255, 204, 0.4), inset 0 0 15px rgba(0, 0, 0, 0.8);
+            z-index: 10;
+            position: relative;
+        }
+
+        canvas#tetris {
+            background-color: #000000;
+            border: 2px solid #39ff14;
+            display: block;
+            box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+            image-rendering: pixelated;
+        }
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 175px;
+        }
+
+        .stat-box {
+            background: #000000;
+            border: 2px solid #ff0055;
+            padding: 8px;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .stat-title {
+            font-size: 10px;
+            color: #ff0055;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffff00;
+            text-shadow: 0 0 5px #ffff00;
+        }
+
+        canvas#next {
+            background: #000000;
+            border: 2px solid #00ffcc;
+            display: block;
+            margin: 0 auto;
+            image-rendering: pixelated;
+        }
+
+        .controls-info {
+            font-size: 10px;
+            color: #7aa2f7;
+            line-height: 1.5;
+            background: #000000;
+            border: 1px solid #414868;
+            padding: 6px;
+            margin-top: 6px;
+        }
+        .controls-info b {
+            color: #ffff00;
+        }
+
+        .btn-row {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-top: 8px;
+        }
+        button.arcade-btn {
+            background: #ff0055;
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 11px;
+            padding: 6px 4px;
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+        button.arcade-btn:hover {
+            background: #00ffcc;
+            color: #000000;
+            border-color: #ffff00;
+        }
+        button.arcade-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Overlay de pausa / Game Over */
+        #game-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.88);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            text-align: center;
+            padding: 20px;
+        }
+        #overlay-title {
+            font-size: 24px;
+            color: #ff0055;
+            font-weight: bold;
+            text-shadow: 0 0 15px #ff0055;
+            margin-bottom: 12px;
+        }
+        #overlay-subtitle {
+            font-size: 12px;
+            color: #39ff14;
+        }
+
+        /* Notificación de inicio de música */
+        #music-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #39ff14;
+            color: #39ff14;
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+    <div id="music-badge">🎵 MÚSICA 8-BIT: ACTIVA</div>
+
+    <header>
+        <h1>🕹️ 8-BIT TETRIS</h1>
+        <div class="subtitle">AURORA-LITE RETRO ARCADE EDITION</div>
+    </header>
+
+    <div class="arcade-container">
+        <div style="position: relative;">
+            <canvas id="tetris" width="240" height="480"></canvas>
+            <div id="game-overlay">
+                <div id="overlay-title">GAME OVER</div>
+                <div id="overlay-subtitle">PULSA 'R' O BOTÓN RESTART PARA JUGAR DE NUEVO</div>
+            </div>
+        </div>
+
+        <div class="side-panel">
+            <div>
+                <div class="stat-box">
+                    <div class="stat-title">PUNTOS</div>
+                    <div class="stat-value" id="score">0</div>
+                </div>
+
+                <div class="stat-box">
+                    <div class="stat-title">NIVEL / LÍNEAS</div>
+                    <div class="stat-value" id="level-lines">1 / 0</div>
+                </div>
+
+                <div class="stat-box">
+                    <div class="stat-title">RÉCORD</div>
+                    <div class="stat-value" id="highscore">0</div>
+                </div>
+
+                <div class="stat-box" style="margin-bottom: 4px;">
+                    <div class="stat-title">SIGUIENTE</div>
+                    <canvas id="next" width="80" height="80"></canvas>
+                </div>
+            </div>
+
+            <div>
+                <div class="controls-info">
+                    <b>← →</b> Mover<br>
+                    <b>↑ / X</b> Rotar<br>
+                    <b>↓</b> Caída suave<br>
+                    <b>Espacio</b> Caída directa<br>
+                    <b>P</b> Pausar | <b>R</b> Reiniciar
+                </div>
+
+                <div class="btn-row">
+                    <button class="arcade-btn" id="btn-sound">🎵 MÚSICA: ON</button>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="arcade-btn" style="flex: 1;" id="btn-pause">PAUSA</button>
+                        <button class="arcade-btn" style="flex: 1;" id="btn-restart">RESTART</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================
+        // SINTETIZADOR DUAL-CHANNEL 8-BIT NES TETRIS CHIPTUNE (Korobeiniki)
+        // =========================================================
+        let audioCtx = null;
+        let musicEnabled = true;
+        let musicTimer = null;
+        let musicIndex = 0;
+        let audioInitialized = false;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        // Frecuencias de notas musicales (Hz)
+        const N = {
+            C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, B3: 246.94,
+            C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, Gs4: 415.30, A4: 440.00, As4: 466.16, B4: 493.88,
+            C5: 523.25, D5: 587.33, Ds5: 622.25, E5: 659.25, F5: 698.46, G5: 783.99, Gs5: 830.61, A5: 880.00, B5: 987.77,
+            C6: 1046.50,
+            REST: 0
+        };
+
+        // Generador de tono onda cuadrada 8-bit con envelope retro
+        function playChiptuneNote(freq, durationMs, vol = 0.08, type = 'square') {
+            if (freq <= 0) return;
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                const now = ctx.currentTime;
+                const durSec = durationMs / 1000;
+
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, now);
+
+                // Envolvente ADSR de 8 bits clásica de NES
+                gain.gain.setValueAtTime(vol, now);
+                gain.gain.exponentialRampToValueAtTime(vol * 0.4, now + durSec * 0.65);
+                gain.gain.linearRampToValueAtTime(0.0001, now + durSec);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + durSec);
+            } catch(e) {}
+        }
+
+        // BASSLINE & MELODÍA DUAL-CHANNEL de Korobeiniki (Tema A Tetris)
+        // [leadFreq, bassFreq, durationMs]
+        const tetrisSong = [
+            // Compás 1-4 (Parte A)
+            [N.E5, N.E3, 400], [N.B4, N.B3, 200], [N.C5, N.C4, 200], [N.D5, N.D4, 400], [N.C5, N.C4, 200], [N.B4, N.B3, 200],
+            [N.A4, N.A3, 400], [N.A4, N.E3, 200], [N.C5, N.A3, 200], [N.E5, N.E4, 400], [N.D5, N.D4, 200], [N.C5, N.C4, 200],
+            [N.B4, N.B3, 600], [N.C5, N.C4, 200], [N.D5, N.D4, 400], [N.E5, N.E4, 400],
+            [N.C5, N.C4, 400], [N.A4, N.A3, 400], [N.A4, N.A3, 400], [N.REST, N.REST, 200],
+
+            // Repetición / Conducción
+            [N.D5, N.D4, 400], [N.F5, N.F4, 200], [N.A5, N.A4, 400], [N.G5, N.G4, 200], [N.F5, N.F4, 200],
+            [N.E5, N.E4, 600], [N.C5, N.C4, 200], [N.E5, N.E4, 400], [N.D5, N.D4, 200], [N.C5, N.C4, 200],
+            [N.B4, N.B3, 400], [N.B4, N.B3, 200], [N.C5, N.C4, 200], [N.D5, N.D4, 400], [N.E5, N.E4, 400],
+            [N.C5, N.C4, 400], [N.A4, N.A3, 400], [N.A4, N.A3, 400], [N.REST, N.REST, 200],
+
+            // Parte B (Arpegios agudos)
+            [N.E5, N.C4, 400], [N.C5, N.G3, 400], [N.D5, N.D4, 400], [N.B4, N.G3, 400],
+            [N.C5, N.A3, 400], [N.A4, N.E3, 400], [N.Gs4, N.E3, 400], [N.B4, N.E3, 400],
+            [N.E5, N.C4, 400], [N.C5, N.G3, 400], [N.D5, N.D4, 400], [N.B4, N.G3, 400],
+            [N.C5, N.A3, 200], [N.E5, N.C4, 200], [N.A5, N.E4, 400], [N.Gs5, N.E4, 600], [N.REST, N.REST, 200]
+        ];
+
+        function playChiptuneStep() {
+            if (!musicEnabled) return;
+            const step = tetrisSong[musicIndex % tetrisSong.length];
+            const leadFreq = step[0];
+            const bassFreq = step[1];
+            const duration = step[2];
+
+            if (leadFreq > 0) {
+                playChiptuneNote(leadFreq, duration * 0.9, 0.07, 'square');
+            }
+            if (bassFreq > 0) {
+                playChiptuneNote(bassFreq, duration * 0.9, 0.05, 'triangle');
+            }
+
+            musicIndex++;
+            musicTimer = setTimeout(playChiptuneStep, duration);
+        }
+
+        function startChiptuneMusic() {
+            if (musicTimer) clearTimeout(musicTimer);
+            musicIndex = 0;
+            playChiptuneStep();
+        }
+
+        function toggleMusic(forceState) {
+            musicEnabled = (forceState !== undefined) ? !!forceState : !musicEnabled;
+            const btn = document.getElementById('btn-sound');
+            const badge = document.getElementById('music-badge');
+            if (musicEnabled) {
+                btn.innerText = '🎵 MÚSICA: ON';
+                btn.style.background = '#39ff14';
+                btn.style.color = '#000000';
+                badge.innerText = '🎵 MÚSICA 8-BIT: ON';
+                badge.style.borderColor = '#39ff14';
+                badge.style.color = '#39ff14';
+                getAudioContext();
+                startChiptuneMusic();
+            } else {
+                btn.innerText = '🔇 MÚSICA: OFF';
+                btn.style.background = '#ff0055';
+                btn.style.color = '#ffffff';
+                badge.innerText = '🔇 MÚSICA 8-BIT: OFF';
+                badge.style.borderColor = '#ff0055';
+                badge.style.color = '#ff0055';
+                clearTimeout(musicTimer);
+            }
+        }
+
+        // Sonidos SFX de acciones
+        const SFX = {
+            move: () => playChiptuneNote(260, 45, 0.05, 'square'),
+            rotate: () => playChiptuneNote(520, 60, 0.08, 'square'),
+            drop: () => playChiptuneNote(140, 80, 0.12, 'square'),
+            line: () => {
+                playChiptuneNote(523, 70, 0.1, 'square');
+                setTimeout(() => playChiptuneNote(659, 70, 0.1, 'square'), 70);
+                setTimeout(() => playChiptuneNote(784, 120, 0.12, 'square'), 140);
+            },
+            tetris: () => {
+                [523, 659, 784, 1046, 1318].forEach((f, i) => {
+                    setTimeout(() => playChiptuneNote(f, 120, 0.14, 'square'), i * 80);
+                });
+            },
+            gameOver: () => {
+                playChiptuneNote(320, 140, 0.16, 'sawtooth');
+                setTimeout(() => playChiptuneNote(240, 160, 0.16, 'sawtooth'), 140);
+                setTimeout(() => playChiptuneNote(160, 320, 0.2, 'sawtooth'), 300);
+            }
+        };
+
+        // Auto-inicio de música en el primer clic o pulsación de tecla
+        function autoStartAudioOnUserGesture() {
+            if (!audioInitialized) {
+                audioInitialized = true;
+                getAudioContext();
+                if (musicEnabled) {
+                    startChiptuneMusic();
+                }
+            }
+        }
+        window.addEventListener('keydown', autoStartAudioOnUserGesture, { passive: true });
+        window.addEventListener('mousedown', autoStartAudioOnUserGesture, { passive: true });
+        window.addEventListener('touchstart', autoStartAudioOnUserGesture, { passive: true });
+
+        // =========================================================
+        // MOTOR DEL JUEGO TETRIS 8-BIT
+        // =========================================================
+        const canvas = document.getElementById('tetris');
+        const context = canvas.getContext('2d');
+        const nextCanvas = document.getElementById('next');
+        const nextContext = nextCanvas.getContext('2d');
+
+        const COLS = 10;
+        const ROWS = 20;
+        const BLOCK = 24;
+
+        context.scale(BLOCK, BLOCK);
+        nextContext.scale(20, 20);
+
+        const PIECES = {
+            'T': [[0, 1, 0], [1, 1, 1], [0, 0, 0]],
+            'O': [[2, 2], [2, 2]],
+            'L': [[0, 0, 3], [3, 3, 3], [0, 0, 0]],
+            'J': [[4, 0, 0], [4, 4, 4], [0, 0, 0]],
+            'I': [[0, 5, 0, 0], [0, 5, 0, 0], [0, 5, 0, 0], [0, 5, 0, 0]],
+            'S': [[0, 6, 6], [6, 6, 0], [0, 0, 0]],
+            'Z': [[7, 7, 0], [0, 7, 7], [0, 0, 0]],
+        };
+
+        const COLORS = [
+            null,
+            '#ff0055', // T: Magenta
+            '#ffff00', // O: Amarillo
+            '#ff9900', // L: Naranja
+            '#0066ff', // J: Azul
+            '#00ffcc', // I: Cyan
+            '#39ff14', // S: Verde
+            '#ff0000'  // Z: Rojo
+        ];
+
+        let arena = createMatrix(COLS, ROWS);
+        let player = {
+            pos: {x: 0, y: 0},
+            matrix: null,
+            score: 0,
+            lines: 0,
+            level: 1
+        };
+
+        let nextPieceMatrix = null;
+        let dropCounter = 0;
+        let dropInterval = 1000;
+        let lastTime = 0;
+        let isPaused = false;
+        let isGameOver = false;
+
+        let highscore = parseInt(localStorage.getItem('aurora_tetris_highscore') || '0', 10);
+        document.getElementById('highscore').innerText = highscore;
+
+        function createMatrix(w, h) {
+            const matrix = [];
+            while (h--) {
+                matrix.push(new Array(w).fill(0));
+            }
+            return matrix;
+        }
+
+        function createPiece(type) {
+            return PIECES[type];
+        }
+
+        function getRandomPiece() {
+            const keys = Object.keys(PIECES);
+            const type = keys[Math.floor(Math.random() * keys.length)];
+            return createPiece(type);
+        }
+
+        function drawMatrix(matrix, offset, ctx, isGhost = false) {
+            matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        ctx.fillStyle = isGhost ? 'rgba(255, 255, 255, 0.18)' : COLORS[value];
+                        ctx.fillRect(x + offset.x, y + offset.y, 1, 1);
+                        ctx.lineWidth = 0.08;
+                        ctx.strokeStyle = '#000000';
+                        ctx.strokeRect(x + offset.x, y + offset.y, 1, 1);
+                    }
+                });
+            });
+        }
+
+        function drawNext() {
+            nextContext.fillStyle = '#000000';
+            nextContext.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+            if (nextPieceMatrix) {
+                const offX = (4 - nextPieceMatrix[0].length) / 2;
+                const offY = (4 - nextPieceMatrix.length) / 2;
+                drawMatrix(nextPieceMatrix, {x: offX, y: offY}, nextContext);
+            }
+        }
+
+        function draw() {
+            context.fillStyle = '#000000';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Rejilla arcade
+            context.strokeStyle = '#0a101f';
+            context.lineWidth = 0.04;
+            for (let x = 0; x < COLS; x++) {
+                context.beginPath(); context.moveTo(x, 0); context.lineTo(x, ROWS); context.stroke();
+            }
+            for (let y = 0; y < ROWS; y++) {
+                context.beginPath(); context.moveTo(0, y); context.lineTo(COLS, y); context.stroke();
+            }
+
+            drawMatrix(arena, {x: 0, y: 0}, context);
+
+            // Ghost piece
+            if (player.matrix && !isGameOver) {
+                let ghostY = player.pos.y;
+                while (!collide(arena, {pos: {x: player.pos.x, y: ghostY + 1}, matrix: player.matrix})) {
+                    ghostY++;
+                }
+                drawMatrix(player.matrix, {x: player.pos.x, y: ghostY}, context, true);
+            }
+
+            if (player.matrix) {
+                drawMatrix(player.matrix, player.pos, context);
+            }
+        }
+
+        function collide(arena, player) {
+            const m = player.matrix;
+            const o = player.pos;
+            for (let y = 0; y < m.length; ++y) {
+                for (let x = 0; x < m[y].length; ++x) {
+                    if (m[y][x] !== 0 && (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function merge(arena, player) {
+            player.matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        arena[y + player.pos.y][x + player.pos.x] = value;
+                    }
+                });
+            });
+        }
+
+        function arenaSweep() {
+            let rowCount = 0;
+            outer: for (let y = arena.length - 1; y >= 0; --y) {
+                for (let x = 0; x < arena[y].length; ++x) {
+                    if (arena[y][x] === 0) {
+                        continue outer;
+                    }
+                }
+                const row = arena.splice(y, 1)[0].fill(0);
+                arena.unshift(row);
+                ++y;
+                rowCount++;
+            }
+
+            if (rowCount > 0) {
+                player.lines += rowCount;
+                if (rowCount === 4) {
+                    player.score += 1200 * player.level;
+                    SFX.tetris();
+                } else {
+                    player.score += (rowCount === 1 ? 100 : rowCount === 2 ? 300 : 500) * player.level;
+                    SFX.line();
+                }
+
+                player.level = Math.floor(player.lines / 10) + 1;
+                dropInterval = Math.max(120, 1000 - (player.level - 1) * 90);
+
+                if (player.score > highscore) {
+                    highscore = player.score;
+                    localStorage.setItem('aurora_tetris_highscore', highscore);
+                    document.getElementById('highscore').innerText = highscore;
+                }
+                updateScore();
+            }
+        }
+
+        function playerReset() {
+            if (!nextPieceMatrix) {
+                nextPieceMatrix = getRandomPiece();
+            }
+            player.matrix = nextPieceMatrix;
+            nextPieceMatrix = getRandomPiece();
+            drawNext();
+
+            player.pos.y = 0;
+            player.pos.x = ((COLS / 2) | 0) - ((player.matrix[0].length / 2) | 0);
+
+            if (collide(arena, player)) {
+                isGameOver = true;
+                SFX.gameOver();
+                document.getElementById('game-overlay').style.display = 'flex';
+            }
+        }
+
+        function playerDrop() {
+            if (isPaused || isGameOver) return;
+            player.pos.y++;
+            if (collide(arena, player)) {
+                player.pos.y--;
+                merge(arena, player);
+                SFX.drop();
+                playerReset();
+                arenaSweep();
+            }
+            dropCounter = 0;
+        }
+
+        function playerHardDrop() {
+            if (isPaused || isGameOver) return;
+            while (!collide(arena, player)) {
+                player.pos.y++;
+            }
+            player.pos.y--;
+            merge(arena, player);
+            SFX.drop();
+            playerReset();
+            arenaSweep();
+            dropCounter = 0;
+        }
+
+        function playerMove(dir) {
+            if (isPaused || isGameOver) return;
+            player.pos.x += dir;
+            if (collide(arena, player)) {
+                player.pos.x -= dir;
+            } else {
+                SFX.move();
+            }
+        }
+
+        function rotate(matrix, dir) {
+            for (let y = 0; y < matrix.length; ++y) {
+                for (let x = 0; x < y; ++x) {
+                    [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
+                }
+            }
+            if (dir > 0) {
+                matrix.forEach(row => row.reverse());
+            } else {
+                matrix.reverse();
+            }
+        }
+
+        function playerRotate(dir) {
+            if (isPaused || isGameOver) return;
+            const pos = player.pos.x;
+            let offset = 1;
+            rotate(player.matrix, dir);
+            while (collide(arena, player)) {
+                player.pos.x += offset;
+                offset = -(offset + (offset > 0 ? 1 : -1));
+                if (offset > player.matrix[0].length) {
+                    rotate(player.matrix, -dir);
+                    player.pos.x = pos;
+                    return;
+                }
+            }
+            SFX.rotate();
+        }
+
+        function updateScore() {
+            document.getElementById('score').innerText = player.score;
+            document.getElementById('level-lines').innerText = `${player.level} / ${player.lines}`;
+        }
+
+        function restartGame() {
+            arena = createMatrix(COLS, ROWS);
+            player.score = 0;
+            player.lines = 0;
+            player.level = 1;
+            dropInterval = 1000;
+            isGameOver = false;
+            isPaused = false;
+            document.getElementById('game-overlay').style.display = 'none';
+            document.getElementById('btn-pause').innerText = 'PAUSA';
+            updateScore();
+            playerReset();
+            if (musicEnabled && audioInitialized) {
+                startChiptuneMusic();
+            }
+        }
+
+        function togglePause() {
+            if (isGameOver) return;
+            isPaused = !isPaused;
+            document.getElementById('btn-pause').innerText = isPaused ? 'REANUDAR' : 'PAUSA';
+            const overlay = document.getElementById('game-overlay');
+            if (isPaused) {
+                document.getElementById('overlay-title').innerText = 'PAUSA';
+                document.getElementById('overlay-subtitle').innerText = "PULSA 'P' PARA CONTINUAR";
+                overlay.style.display = 'flex';
+                clearTimeout(musicTimer);
+            } else {
+                overlay.style.display = 'none';
+                if (musicEnabled) playChiptuneStep();
+            }
+        }
+
+        function update(time = 0) {
+            const deltaTime = time - lastTime;
+            lastTime = time;
+
+            if (!isPaused && !isGameOver) {
+                dropCounter += deltaTime;
+                if (dropCounter > dropInterval) {
+                    playerDrop();
+                }
+            }
+
+            draw();
+            requestAnimationFrame(update);
+        }
+
+        // Teclado
+        window.addEventListener('keydown', event => {
+            autoStartAudioOnUserGesture();
+            if (event.key === 'ArrowLeft') {
+                event.preventDefault(); playerMove(-1);
+            } else if (event.key === 'ArrowRight') {
+                event.preventDefault(); playerMove(1);
+            } else if (event.key === 'ArrowDown') {
+                event.preventDefault(); playerDrop();
+            } else if (event.key === 'ArrowUp' || event.key.toLowerCase() === 'x') {
+                event.preventDefault(); playerRotate(1);
+            } else if (event.code === 'Space') {
+                event.preventDefault(); playerHardDrop();
+            } else if (event.key.toLowerCase() === 'p') {
+                togglePause();
+            } else if (event.key.toLowerCase() === 'r') {
+                restartGame();
+            }
+        });
+
+        // Botones UI
+        document.getElementById('btn-sound').onclick = () => toggleMusic();
+        document.getElementById('btn-pause').onclick = togglePause;
+        document.getElementById('btn-restart').onclick = restartGame;
+
+        // Iniciar
+        restartGame();
+        update();
+    </script>
+</body>
+</html>

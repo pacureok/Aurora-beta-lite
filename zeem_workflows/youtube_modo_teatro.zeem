@@ -1,0 +1,14 @@
+{
+  "name": "YouTube Modo Teatro Autom\u00e1tico",
+  "description": "Activa autom\u00e1ticamente el modo teatro en YouTube al cargar el video.",
+  "actions": [
+    {
+      "type": "delay",
+      "ms": 1200
+    },
+    {
+      "type": "click",
+      "selector": "button.ytp-size-button"
+    }
+  ]
+}

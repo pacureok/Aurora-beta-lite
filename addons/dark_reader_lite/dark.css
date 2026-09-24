@@ -1,0 +1,9 @@
+/* Estilos de alto contraste y modo oscuro suave */
+html {
+  scrollbar-color: #7f5af0 #16161e;
+  background-color: #121214 !important;
+  color: #e0e0e0 !important;
+}
+img, video, iframe, canvas {
+  filter: contrast(102%) brightness(98%);
+}

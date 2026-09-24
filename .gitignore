@@ -1,0 +1,16 @@
+# POLÍTICA DE CÓDIGO CERRADO: SOLO BINARIOS Y RECURSOS
+*.py
+*.pyc
+*.c
+*.cpp
+*.h
+*.rs
+*.toml
+*.o
+*.obj
+__pycache__/
+build/
+.system_generated/
+# Excluir archivos que exceden el límite de 100MB de GitHub
+*Qt6WebEngineCore.dll
+*.debug.pak

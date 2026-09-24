@@ -1,0 +1,9 @@
+{
+  "id": "python_automation",
+  "name": "Page Inspector Python",
+  "version": "1.0.0",
+  "description": "Script de automatización en Python que analiza la página activa sin restricciones corporativas",
+  "author": "Aurora Community",
+  "enabled": true,
+  "python_script": "automation.py"
+}

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.aurora.lite.vr"
+    android:versionCode="100"
+    android:versionName="1.0.0-quest3s">
+
+    <!-- Permisos de Red y Aceleración WebXR para Meta Quest -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+    <!-- Declaración obligatoria de características VR para Horizon OS (Meta Quest 3S / Quest 3) -->
+    <uses-feature
+        android:name="android.hardware.vr.headtracking"
+        android:required="true"
+        android:version="1" />
+    
+    <uses-feature
+        android:name="oculus.software.handtracking"
+        android:required="false" />
+
+    <uses-feature
+        android:glEsVersion="0x00030002"
+        android:required="true" />
+
+    <application
+        android:allowBackup="false"
+        android:hardwareAccelerated="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="Aurora Lite VR"
+        android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen">
+
+        <!-- Declaración de compatibilidad con visores de la familia Meta Quest -->
+        <meta-data
+            android:name="com.oculus.supportedDevices"
+            android:value="quest2|questpro|quest3|quest3s" />
+
+        <!-- Tasa de refresco compatible: 90Hz / 120Hz nativos en Quest 3S -->
+        <meta-data
+            android:name="com.oculus.vr.display_frequency"
+            android:value="90,120" />
+
+        <!-- Notificación de foco VR y renderizado continuo -->
+        <meta-data
+            android:name="com.oculus.vr.focusaware"
+            android:value="true" />
+
+        <meta-data
+            android:name="com.oculus.handtracking.version"
+            android:value="V2.0" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="landscape"
+            android:configChanges="density|keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|uiMode">
+            
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <!-- Categoría VR para inicio directo en el entorno inmersivo de Horizon OS -->
+                <category android:name="com.oculus.intent.category.VR" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

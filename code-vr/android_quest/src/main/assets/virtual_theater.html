@@ -124,7 +124,10 @@
     <button class="hud-btn" id="btn-steamlink" style="background: linear-gradient(135deg, #1b2838, #2a475e); border-color: #66c0f4;" title="Transmitir Pantalla o Juegos con Steam Link / Escritorio">
       <span>🎮 Steam Link / PC Stream</span>
     </button>
-    <button class="hud-btn" id="vr-btn" title="Iniciar WebXR para Meta Quest 3S">
+    <button class="hud-btn" id="btn-steamvr" style="background: linear-gradient(135deg, #171a21, #212c3d); border-color: #66c0f4;" title="Iniciar / Conectar con SteamVR">
+      <span>🥽 SteamVR</span>
+    </button>
+    <button class="hud-btn" id="vr-btn" title="Iniciar WebXR para Meta Quest 3S / SteamVR">
       <span>🥽 Ingresar a VR</span>
     </button>
     <button class="hud-btn" id="btn-exit" style="background: rgba(239, 69, 101, 0.2); border-color: rgba(239, 69, 101, 0.4);" title="Salir del Teatro">
@@ -504,6 +507,15 @@
         }
       });
 
+      // 5c. Modo SteamVR
+      const btnSteamVR = document.getElementById('btn-steamvr');
+      if (btnSteamVR) {
+        btnSteamVR.addEventListener('click', () => {
+          mostrarToastHUD('Conectando e iniciando entorno SteamVR...');
+          window.location.href = 'steam://rungameid/250820';
+        });
+      }
+
       // 6. Botón WebXR (Meta Quest 3S)
       vrButton.addEventListener('click', async () => {
         if (!navigator.xr || !isVRSupported) {
@@ -553,6 +565,14 @@
       }
       renderer.render(scene, camera);
     }
+
+    // Exponer funciones globales para integración con WebEngine y SteamVR
+    window.render = render;
+    window.renderer = renderer;
+    window.setRefreshRate = function(hz) {
+      const ind = document.getElementById('hz-indicator');
+      if (ind) ind.textContent = `${hz}Hz WebXR / SteamVR`;
+    };
 
     // Inicializar
     window.addEventListener('DOMContentLoaded', init);

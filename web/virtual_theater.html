@@ -149,6 +149,20 @@
 
     const container = document.getElementById('canvas-container');
 
+    // Notificaciones HUD globales (Toast)
+    let toastTimeout = null;
+    function mostrarToastHUD(mensaje) {
+      const toast = document.getElementById('vr-toast');
+      if (!toast) return;
+      toast.textContent = mensaje;
+      toast.classList.add('visible');
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('visible');
+      }, 4500);
+    }
+    window.mostrarToastHUD = mostrarToastHUD;
+
     // Estado del Teatro
     const state = {
       curvatureIndex: 1, // 0: Plano, 1: IMAX (Curvado), 2: Envolvente 180°
@@ -216,19 +230,7 @@
       // 8. Eventos de Redimensionamiento
       window.addEventListener('resize', onWindowResize);
 
-    let toastTimeout = null;
-    function mostrarToastHUD(mensaje) {
-      const toast = document.getElementById('vr-toast');
-      if (!toast) return;
-      toast.textContent = mensaje;
-      toast.classList.add('visible');
-      if (toastTimeout) clearTimeout(toastTimeout);
-      toastTimeout = setTimeout(() => {
-        toast.classList.remove('visible');
-      }, 4500);
-    }
-
-    // 9. Comprobar WebXR para visores (Meta Quest 3S)
+      // 9. Comprobar WebXR para visores (Meta Quest 3S)
     if ('xr' in navigator) {
       navigator.xr.isSessionSupported('immersive-vr').then(supported => {
         isVRSupported = supported;
@@ -503,7 +505,11 @@
           badge.style.borderColor = '#2cb67d';
           badge.querySelector('span').textContent = '🎮 Stream PC Activo';
         } catch (err) {
-          console.warn('Captura cancelada o denegada:', err);
+          if (err && err.name === 'NotAllowedError') {
+            mostrarToastHUD('Selección de pantalla cancelada');
+          } else {
+            console.warn('Captura cancelada o denegada:', err);
+          }
         }
       });
 
